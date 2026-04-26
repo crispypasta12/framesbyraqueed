@@ -1,10 +1,13 @@
 {
   "name": "photography-portfolio",
   "private": true,
+  "workspaces": [
+    "app"
+  ],
   "scripts": {
-    "dev": "npm --prefix app run dev",
-    "build": "npm --prefix app run build",
-    "lint": "npm --prefix app run lint",
-    "preview": "npm --prefix app run preview"
+    "dev": "npm run dev --workspace app",
+    "build": "npm run build --workspace app",
+    "lint": "npm run lint --workspace app",
+    "preview": "npm run preview --workspace app"
   }
 }
