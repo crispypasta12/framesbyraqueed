@@ -17,6 +17,7 @@ export default function About() {
 
       <div className="about-body">
         <div className="about-portrait fi">
+          <img src="/about-portrait.jpg" alt="Syed Raqueed Bin Alvee" loading="lazy" decoding="async" />
           <div className="portrait-label">self-portrait, Dhaka</div>
         </div>
         <div className="about-text fi">
