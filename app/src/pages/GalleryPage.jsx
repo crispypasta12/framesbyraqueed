@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ALL_PHOTOS, FILTERS } from '../data/photos.js';
 import { useCursor } from '../hooks/useCursor.js';
+import { usePhotos } from '../hooks/usePhotos.js';
 
 const VIEWS = ['masonry', 'grid', 'list'];
 
@@ -84,19 +84,16 @@ function PhotoItem({ photo, idx, view, onClick }) {
             style={{
               width: '120px',
               height: '90px',
-              background: photo.g,
+              background: photo.url ? '#080808' : photo.g,
               position: 'relative',
               overflow: 'hidden',
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background:
-                  'linear-gradient(135deg,rgba(0,0,0,.3),transparent)',
-              }}
-            />
+            {photo.url ? (
+              <img src={photo.url} alt={photo.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            ) : (
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,rgba(0,0,0,.3),transparent)' }} />
+            )}
           </div>
         </div>
         <div className="gi-info">
@@ -125,21 +122,18 @@ function PhotoItem({ photo, idx, view, onClick }) {
         <div
           className="gi-placeholder"
           style={{
-            background: photo.g,
+            background: photo.url ? '#080808' : photo.g,
             paddingBottom: pct,
             aspectRatio: aspect,
             position: 'relative',
             overflow: 'hidden',
           }}
         >
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background:
-                'linear-gradient(to top,rgba(8,8,8,.25) 0%,transparent 50%)',
-            }}
-          />
+          {photo.url ? (
+            <img src={photo.url} alt={photo.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+          ) : (
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(8,8,8,.25) 0%,transparent 50%)' }} />
+          )}
         </div>
       </div>
       <span className="gi-cam">{photo.cam}</span>
@@ -193,34 +187,22 @@ function GalleryLightbox({ photo, all, onClose, onPrev, onNext, onGoTo }) {
         <div className="lb-img-wrap">
           <div
             style={{
-              background: photo.g,
+              background: photo.url ? '#080808' : photo.g,
               width: 'min(80vw,960px)',
               paddingBottom: `min(${pct},62vh)`,
               position: 'relative',
               overflow: 'hidden',
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "'Cormorant Garamond',serif",
-                  fontStyle: 'italic',
-                  color: 'rgba(240,235,226,.15)',
-                  fontSize: '1rem',
-                  letterSpacing: '.2em',
-                }}
-              >
-                {photo.title}
-              </span>
-            </div>
+            {photo.url ? (
+              <img src={photo.url} alt={photo.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+            ) : (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', color: 'rgba(240,235,226,.15)', fontSize: '1rem', letterSpacing: '.2em' }}>
+                  {photo.title}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         <div className="lb-meta">
@@ -266,12 +248,11 @@ function GalleryLightbox({ photo, all, onClose, onPrev, onNext, onGoTo }) {
             <div
               key={p.id}
               className={`lb-strip-thumb${p.id === photo.id ? ' active' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onGoTo(i);
-              }}
-              style={{ background: p.g }}
-            />
+              onClick={(e) => { e.stopPropagation(); onGoTo(i); }}
+              style={{ background: p.url ? '#080808' : p.g, position: 'relative', overflow: 'hidden' }}
+            >
+              {p.url && <img src={p.url} alt={p.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />}
+            </div>
           ))}
         </div>
       </div>
@@ -285,16 +266,23 @@ export default function GalleryPage() {
   const [lb, setLb] = useState(null);
   const [fading, setFading] = useState(false);
   const pendingFilter = useRef(null);
+  const { photos: ALL_PHOTOS } = usePhotos();
 
   useCursor('OPEN');
   useParallax();
+
+  const FILTERS = useMemo(() => {
+    const tags = new Set();
+    ALL_PHOTOS.forEach((p) => p.tags?.forEach((t) => tags.add(t)));
+    return ['All', ...Array.from(tags).sort()];
+  }, [ALL_PHOTOS]);
 
   const filtered = useMemo(
     () =>
       filter === 'All'
         ? ALL_PHOTOS
         : ALL_PHOTOS.filter((p) => p.tags.includes(filter)),
-    [filter]
+    [filter, ALL_PHOTOS]
   );
 
   const counts = useMemo(() => {
@@ -303,7 +291,7 @@ export default function GalleryPage() {
       c[f] = ALL_PHOTOS.filter((p) => p.tags.includes(f)).length;
     });
     return c;
-  }, []);
+  }, [ALL_PHOTOS, FILTERS]);
 
   useGalleryReveal(filter + view + fading);
 

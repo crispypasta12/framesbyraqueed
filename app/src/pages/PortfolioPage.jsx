@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { PHOTOS } from '../data/photos.js';
 import { useCursor } from '../hooks/useCursor.js';
 import { useReveal } from '../hooks/useReveal.js';
+import { usePhotos } from '../hooks/usePhotos.js';
 import Nav from '../components/portfolio/Nav.jsx';
 import Hero from '../components/portfolio/Hero.jsx';
 import Marquee from '../components/portfolio/Marquee.jsx';
@@ -17,6 +17,7 @@ import VideoModal from '../components/portfolio/VideoModal.jsx';
 export default function PortfolioPage() {
   const [lightbox, setLightbox] = useState({ photo: null, idx: 0 });
   const [videoModal, setVideoModal] = useState(null);
+  const { photos } = usePhotos();
 
   useCursor('VIEW');
   useReveal('.fi', 'v', []);
@@ -37,13 +38,13 @@ export default function PortfolioPage() {
   const closeLB = () => setLightbox({ photo: null, idx: 0 });
   const prevPhoto = () =>
     setLightbox(({ idx }) => {
-      const ni = (idx - 1 + PHOTOS.length) % PHOTOS.length;
-      return { photo: PHOTOS[ni], idx: ni };
+      const ni = (idx - 1 + photos.length) % photos.length;
+      return { photo: photos[ni], idx: ni };
     });
   const nextPhoto = () =>
     setLightbox(({ idx }) => {
-      const ni = (idx + 1) % PHOTOS.length;
-      return { photo: PHOTOS[ni], idx: ni };
+      const ni = (idx + 1) % photos.length;
+      return { photo: photos[ni], idx: ni };
     });
 
   const scrollTo = (id) => {
@@ -59,8 +60,8 @@ export default function PortfolioPage() {
         onVideo={() => scrollTo('video')}
       />
       <Marquee />
-      <HGallery onPhoto={openPhoto} />
-      <BentoGrid onPhoto={openPhoto} />
+      <HGallery photos={photos.slice(0, 8)} onPhoto={openPhoto} />
+      <BentoGrid photos={photos.slice(0, 12)} onPhoto={openPhoto} />
       <Stats />
       <VideoSection onVideo={setVideoModal} />
       <About />

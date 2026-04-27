@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { HPHOTOS } from '../../data/photos.js';
 
-export default function HGallery({ onPhoto }) {
+export default function HGallery({ photos, onPhoto }) {
   const outerRef = useRef(null);
   const trackRef = useRef(null);
   const barRef = useRef(null);
@@ -13,7 +12,9 @@ export default function HGallery({ onPhoto }) {
     const track = trackRef.current;
     const bar = barRef.current;
     const countEl = countRef.current;
-    if (!outer || !track) return;
+    if (!outer || !track || photos.length === 0) return;
+
+    const count = photos.length;
 
     const update = () => {
       const rect = outer.getBoundingClientRect();
@@ -26,12 +27,10 @@ export default function HGallery({ onPhoto }) {
       const slideW = track.children[0]?.offsetWidth || 1;
       const idx = Math.min(
         Math.round((maxTx * progress) / (slideW + 16)),
-        HPHOTOS.length - 1
+        count - 1
       );
       if (countEl)
-        countEl.textContent = `${String(idx + 1).padStart(2, '0')} / ${String(
-          HPHOTOS.length
-        ).padStart(2, '0')}`;
+        countEl.textContent = `${String(idx + 1).padStart(2, '0')} / ${String(count).padStart(2, '0')}`;
     };
 
     const setHeight = () => {
@@ -47,7 +46,7 @@ export default function HGallery({ onPhoto }) {
       window.removeEventListener('scroll', update);
       window.removeEventListener('resize', setHeight);
     };
-  }, []);
+  }, [photos]);
 
   return (
     <div id="gallery" ref={outerRef} className="hscroll-outer">
@@ -59,7 +58,7 @@ export default function HGallery({ onPhoto }) {
           </div>
           <div className="hscroll-progress-wrap">
             <span ref={countRef} className="hscroll-count">
-              01 / 08
+              01 / {String(photos.length || 8).padStart(2, '0')}
             </span>
             <div className="hscroll-bar">
               <div
@@ -75,25 +74,28 @@ export default function HGallery({ onPhoto }) {
         </div>
         <div className="hscroll-track-wrap">
           <div ref={trackRef} className="hscroll-track">
-            {HPHOTOS.map((p, i) => (
+            {photos.map((p, i) => (
               <div
                 key={p.id}
                 className="hslide"
                 onClick={() => onPhoto(p, i)}
-                onMouseEnter={() =>
-                  document.body.classList.add('hovering-photo')
-                }
-                onMouseLeave={() =>
-                  document.body.classList.remove('hovering-photo')
-                }
+                onMouseEnter={() => document.body.classList.add('hovering-photo')}
+                onMouseLeave={() => document.body.classList.remove('hovering-photo')}
               >
-                <div className="hslide-bg" style={{ background: p.g }} />
+                <div className="hslide-bg" style={{ background: p.url ? '#080808' : p.g }}>
+                  {p.url && (
+                    <img
+                      src={p.url}
+                      alt={p.title}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      loading="lazy"
+                    />
+                  )}
+                </div>
                 <div className="hslide-overlay" />
                 <span className="hslide-cam">{p.cam}</span>
                 <div className="hslide-info">
-                  <span className="hslide-num">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
+                  <span className="hslide-num">{String(i + 1).padStart(2, '0')}</span>
                   <div className="hslide-title">{p.title}</div>
                   <div className="hslide-loc">{p.loc}</div>
                 </div>
