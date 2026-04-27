@@ -54,9 +54,12 @@ const s = {
   cardTitle: { fontSize: '0.85rem', marginBottom: '0.25rem' },
   cardMeta: { fontSize: '0.7rem', color: '#666', marginBottom: '0.5rem' },
   deleteBtn: { background: 'none', border: '1px solid #2a2a2a', color: '#666', padding: '0.3rem 0.6rem', fontSize: '0.68rem', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase' },
+  toggleBtn: (active) => ({ background: active ? 'rgba(240,235,226,0.1)' : 'none', border: '1px solid', borderColor: active ? '#f0ebe2' : '#2a2a2a', color: active ? '#f0ebe2' : '#555', padding: '0.3rem 0.6rem', fontSize: '0.62rem', cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase' }),
+  cardActions: { display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.5rem' },
+  checkRow: { display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontSize: '0.78rem', color: '#aaa' },
 };
 
-const blank = { title: '', loc: '', cam: '', ar: '4/3', tags: [] };
+const blank = { title: '', loc: '', cam: '', ar: '4/3', tags: [], in_still_frames: false, in_selected_work: false };
 
 export default function AdminPage() {
   const [form, setForm] = useState(blank);
@@ -126,6 +129,8 @@ export default function AdminPage() {
         tags: form.tags,
         url: cloud.secure_url,
         public_id: cloud.public_id,
+        in_still_frames: form.in_still_frames,
+        in_selected_work: form.in_selected_work,
       });
 
       if (error) throw new Error(error.message);
@@ -147,6 +152,11 @@ export default function AdminPage() {
   const deletePhoto = async (photo) => {
     if (!confirm(`Delete "${photo.title}"?`)) return;
     await supabase.from('photos').delete().eq('id', photo.id);
+    fetchPhotos();
+  };
+
+  const toggleSection = async (photo, field) => {
+    await supabase.from('photos').update({ [field]: !photo[field] }).eq('id', photo.id);
     fetchPhotos();
   };
 
@@ -207,6 +217,20 @@ export default function AdminPage() {
           </div>
 
           <div style={s.fullRow}>
+            <label style={s.label}>Homepage Sections</label>
+            <div style={{ display: 'flex', gap: '2rem' }}>
+              <label style={s.checkRow}>
+                <input type="checkbox" checked={form.in_still_frames} onChange={(e) => setForm((p) => ({ ...p, in_still_frames: e.target.checked }))} />
+                Still Frames
+              </label>
+              <label style={s.checkRow}>
+                <input type="checkbox" checked={form.in_selected_work} onChange={(e) => setForm((p) => ({ ...p, in_selected_work: e.target.checked }))} />
+                Selected Work
+              </label>
+            </div>
+          </div>
+
+          <div style={s.fullRow}>
             <button style={s.submitBtn} type="submit" disabled={uploading}>
               {uploading ? 'Uploading…' : 'Upload Photo'}
             </button>
@@ -233,7 +257,13 @@ export default function AdminPage() {
                 <div style={s.cardBody}>
                   <div style={s.cardTitle}>{p.title}</div>
                   <div style={s.cardMeta}>{[p.loc, p.cam].filter(Boolean).join(' · ')}</div>
-                  <button style={s.deleteBtn} onClick={() => deletePhoto(p)}>Delete</button>
+                  <div style={s.cardActions}>
+                    <button style={s.toggleBtn(p.in_still_frames)} onClick={() => toggleSection(p, 'in_still_frames')}>Still Frames</button>
+                    <button style={s.toggleBtn(p.in_selected_work)} onClick={() => toggleSection(p, 'in_selected_work')}>Selected Work</button>
+                  </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <button style={s.deleteBtn} onClick={() => deletePhoto(p)}>Delete</button>
+                  </div>
                 </div>
               </div>
             ))}
