@@ -6,7 +6,6 @@ import Nav from '../components/portfolio/Nav.jsx';
 import Hero from '../components/portfolio/Hero.jsx';
 import Marquee from '../components/portfolio/Marquee.jsx';
 import HGallery from '../components/portfolio/HGallery.jsx';
-import BentoGrid from '../components/portfolio/BentoGrid.jsx';
 import Stats from '../components/portfolio/Stats.jsx';
 import VideoSection from '../components/portfolio/VideoSection.jsx';
 import About from '../components/portfolio/About.jsx';
@@ -60,8 +59,7 @@ export default function PortfolioPage() {
         onVideo={() => scrollTo('video')}
       />
       <Marquee />
-      <HGallery photos={photos.filter(p => p.in_still_frames).slice(0, 8)} onPhoto={openPhoto} />
-      <BentoGrid photos={photos.filter(p => p.in_selected_work).slice(0, 5)} onPhoto={openPhoto} />
+      <HGallery photos={photos.filter(p => p.in_still_frames)} onPhoto={openPhoto} />
       <Stats />
       <VideoSection onVideo={setVideoModal} />
       <About />

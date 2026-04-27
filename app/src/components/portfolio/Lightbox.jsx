@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { IMAGE_PRESETS, cloudinaryImage } from '../../lib/cloudinary.js';
 
 export default function Lightbox({ photo, onClose, onPrev, onNext }) {
   useEffect(() => {
@@ -16,9 +17,6 @@ export default function Lightbox({ photo, onClose, onPrev, onNext }) {
     return () => window.removeEventListener('keydown', h);
   }, [photo, onClose, onPrev, onNext]);
 
-  const [n, d] = photo ? photo.ar.split('/').map(Number) : [3, 2];
-  const pct = ((d / n) * 100).toFixed(1) + '%';
-
   return (
     <div
       className={`modal-bg${photo ? ' open' : ''}`}
@@ -27,41 +25,34 @@ export default function Lightbox({ photo, onClose, onPrev, onNext }) {
       {photo && (
         <div className="lightbox-inner">
           <div className="lb-img">
-            <div
-              style={{
-                background: photo.g,
-                width: 'min(80vw,900px)',
-                paddingBottom: `min(${pct},68vh)`,
-                position: 'relative',
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "'Cormorant Garamond',serif",
-                    fontStyle: 'italic',
-                    color: 'rgba(240,235,226,0.18)',
-                    fontSize: '1rem',
-                    letterSpacing: '.2em',
-                  }}
-                >
-                  {photo.title}
-                </span>
-              </div>
-            </div>
+            {photo.url ? (
+              <img
+                className="lb-photo"
+                src={cloudinaryImage(photo.url, IMAGE_PRESETS.lightbox)}
+                alt={photo.title}
+                decoding="async"
+              />
+            ) : (
+              <span className="lb-placeholder">{photo.title}</span>
+            )}
           </div>
           <div className="lb-meta">
             <h3>{photo.title}</h3>
             <p>{photo.loc}</p>
             <div className="lb-cam">{photo.cam}</div>
+            {(() => {
+              const chips = [
+                photo.aperture,
+                photo.shutter_speed,
+                photo.iso != null && `ISO ${photo.iso}`,
+                photo.focal_length,
+              ].filter(Boolean);
+              return chips.length ? (
+                <div className="exif-strip exif-strip--centered" style={{ marginTop: '0.7rem' }}>
+                  {chips.map((c) => <span key={c} className="exif-chip">{c}</span>)}
+                </div>
+              ) : null;
+            })()}
           </div>
         </div>
       )}

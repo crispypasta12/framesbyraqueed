@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCursor } from '../hooks/useCursor.js';
 import { usePhotos } from '../hooks/usePhotos.js';
+import { IMAGE_PRESETS, cloudinaryImage } from '../lib/cloudinary.js';
 
 const VIEWS = ['masonry', 'grid', 'list'];
 
@@ -30,6 +31,21 @@ const VIEW_ICONS = {
     </svg>
   ),
 };
+
+function ExifStrip({ photo, centered = false }) {
+  const chips = [
+    photo.aperture,
+    photo.shutter_speed,
+    photo.iso != null && `ISO ${photo.iso}`,
+    photo.focal_length,
+  ].filter(Boolean);
+  if (!chips.length) return null;
+  return (
+    <div className={`exif-strip${centered ? ' exif-strip--centered' : ''}`}>
+      {chips.map((c) => <span key={c} className="exif-chip">{c}</span>)}
+    </div>
+  );
+}
 
 function useParallax() {
   useEffect(() => {
@@ -61,7 +77,6 @@ function useGalleryReveal(dep) {
       clearTimeout(id);
       obs.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dep]);
 }
 
@@ -90,7 +105,7 @@ function PhotoItem({ photo, idx, view, onClick }) {
             }}
           >
             {photo.url ? (
-              <img src={photo.url} alt={photo.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+              <img src={cloudinaryImage(photo.url, IMAGE_PRESETS.thumb)} alt={photo.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading={idx < 6 ? 'eager' : 'lazy'} fetchPriority={idx < 6 ? 'high' : 'auto'} decoding="async" />
             ) : (
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,rgba(0,0,0,.3),transparent)' }} />
             )}
@@ -99,6 +114,7 @@ function PhotoItem({ photo, idx, view, onClick }) {
         <div className="gi-info">
           <div className="gi-title">{photo.title}</div>
           <div className="gi-loc">{photo.loc}</div>
+          <ExifStrip photo={photo} />
         </div>
         <div className="gallery-list-right">
           <span className="gallery-list-cam">{photo.cam}</span>
@@ -130,7 +146,7 @@ function PhotoItem({ photo, idx, view, onClick }) {
           }}
         >
           {photo.url ? (
-            <img src={photo.url} alt={photo.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            <img src={cloudinaryImage(photo.url, IMAGE_PRESETS.galleryCard)} alt={photo.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading={idx < 6 ? 'eager' : 'lazy'} fetchPriority={idx < 6 ? 'high' : 'auto'} decoding="async" />
           ) : (
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(8,8,8,.25) 0%,transparent 50%)' }} />
           )}
@@ -141,6 +157,7 @@ function PhotoItem({ photo, idx, view, onClick }) {
       <div className="gi-info">
         <div className="gi-title">{photo.title}</div>
         <div className="gi-loc">{photo.loc}</div>
+        <ExifStrip photo={photo} />
       </div>
     </div>
   );
@@ -195,7 +212,7 @@ function GalleryLightbox({ photo, all, onClose, onPrev, onNext, onGoTo }) {
             }}
           >
             {photo.url ? (
-              <img src={photo.url} alt={photo.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src={cloudinaryImage(photo.url, IMAGE_PRESETS.lightbox)} alt={photo.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} decoding="async" />
             ) : (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', color: 'rgba(240,235,226,.15)', fontSize: '1rem', letterSpacing: '.2em' }}>
@@ -209,6 +226,7 @@ function GalleryLightbox({ photo, all, onClose, onPrev, onNext, onGoTo }) {
           <h3>{photo.title}</h3>
           <p>{photo.loc}</p>
           <div className="lb-meta-cam">{photo.cam}</div>
+          <ExifStrip photo={photo} centered />
         </div>
         <div className="lb-counter">
           {String(idx + 1).padStart(2, '0')} /{' '}
@@ -251,7 +269,7 @@ function GalleryLightbox({ photo, all, onClose, onPrev, onNext, onGoTo }) {
               onClick={(e) => { e.stopPropagation(); onGoTo(i); }}
               style={{ background: p.url ? '#080808' : p.g, position: 'relative', overflow: 'hidden' }}
             >
-              {p.url && <img src={p.url} alt={p.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />}
+              {p.url && <img src={cloudinaryImage(p.url, IMAGE_PRESETS.tinyThumb)} alt={p.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" decoding="async" />}
             </div>
           ))}
         </div>
@@ -293,7 +311,7 @@ export default function GalleryPage() {
     return c;
   }, [ALL_PHOTOS, FILTERS]);
 
-  useGalleryReveal(filter + view + fading);
+  useGalleryReveal(filter + view + fading + ALL_PHOTOS.length);
 
   const changeFilter = useCallback(
     (f) => {
@@ -335,7 +353,7 @@ export default function GalleryPage() {
         <div className="page-header-inner">
           <div>
             <span className="page-eyebrow">Photography</span>
-            <h1 className="page-title">Full Gallery</h1>
+            <h1 className="page-title">Gallery</h1>
           </div>
           <div className="page-meta">
             <div className="page-count">

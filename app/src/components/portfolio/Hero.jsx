@@ -30,7 +30,7 @@ export default function Hero({ onPhoto, onVideo }) {
       </div>
       <div id="hero-earth" />
       <div className="hero-vert-label">
-        framesbyraqueed — photography &amp; film — bangladesh
+        framesbyraqueed - photography &amp; film - bangladesh
       </div>
 
       <div className="hero-left">
@@ -49,7 +49,7 @@ export default function Hero({ onPhoto, onVideo }) {
             <em>Bin Alvee</em>
           </h1>
           <p className="hero-tagline">
-            Capturing moments that move you — one frame at a time.
+            Capturing moments that move you - one frame at a time.
           </p>
           <div className="hero-ctas">
             <button className="btn btn-fill" onClick={onPhoto}>
@@ -66,10 +66,6 @@ export default function Hero({ onPhoto, onVideo }) {
         </div>
 
         <div className="hero-bottom-row">
-          <div className="hero-scroll">
-            <div className="hero-scroll-line" />
-            <span className="hero-scroll-text">Scroll</span>
-          </div>
           <div className="hero-exif">
             <div className="exif-item">
               <span>Aperture</span>f/2.0
@@ -80,28 +76,6 @@ export default function Hero({ onPhoto, onVideo }) {
             <div className="exif-item">
               <span>Shutter</span>1/500s
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="hero-right">
-        <div className="hero-frame-wrap">
-          <div className="hero-film">
-            <div className="hero-film-inner" />
-            <div className="hero-film-num">X100VI · f/2.0</div>
-            <div className="hero-film-bot">
-              <div className="hero-film-placeholder">
-                self-portrait, Dhaka
-              </div>
-            </div>
-          </div>
-          <div className="fc tl" />
-          <div className="fc tr" />
-          <div className="fc bl" />
-          <div className="fc br" />
-          <div className="hero-film-label">
-            <span>Fujifilm · Classic Chrome</span>
-            <span>2026</span>
           </div>
         </div>
       </div>

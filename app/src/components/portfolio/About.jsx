@@ -1,6 +1,6 @@
 const GEAR = [
   ['Fujifilm X100VI', 'Street & Everyday'],
-  ['Fujifilm XT-30ii', 'Travel & Landscape'],
+  ['Fujifilm XT-30 ii', 'Travel & Landscape'],
   ['Fujifilm XH2S', 'Video & Motion'],
 ];
 
