@@ -26,7 +26,6 @@ body {
   color: var(--text);
   font-family: 'DM Mono', monospace;
   overflow-x: hidden;
-  cursor: none;
 }
 
 a {
@@ -50,61 +49,6 @@ body::after {
 }
 
 /* ── CURSOR ────────────────────────────────────────────────────────── */
-#cur-dot {
-  position: fixed;
-  width: 6px;
-  height: 6px;
-  background: var(--text);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition:
-    width 0.25s,
-    height 0.25s,
-    background 0.25s;
-}
-#cur-ring {
-  position: fixed;
-  width: 40px;
-  height: 40px;
-  border: 1px solid rgba(240, 235, 226, 0.4);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9998;
-  transform: translate(-50%, -50%);
-  transition:
-    width 0.35s cubic-bezier(0.23, 1, 0.32, 1),
-    height 0.35s cubic-bezier(0.23, 1, 0.32, 1),
-    border-color 0.35s,
-    background 0.35s;
-}
-#cur-label {
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  font-size: 0.5rem;
-  letter-spacing: 0.15em;
-  color: var(--bg);
-  opacity: 0;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.25s;
-  font-family: 'DM Mono', monospace;
-}
-body.hovering-photo #cur-dot {
-  width: 0;
-  height: 0;
-}
-body.hovering-photo #cur-ring {
-  width: 80px;
-  height: 80px;
-  border-color: var(--gold);
-  background: var(--gold);
-}
-body.hovering-photo #cur-label {
-  opacity: 1;
-}
-
 /* ── NAV ───────────────────────────────────────────────────────────── */
 nav.portfolio-nav {
   position: fixed;
@@ -539,7 +483,7 @@ nav.portfolio-nav {
   font-size: 0.58rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  cursor: none;
+  cursor: pointer;
   transition: all 0.3s;
   border: none;
 }
@@ -688,7 +632,7 @@ nav.portfolio-nav {
   min-width: 160px;
   position: relative;
   overflow: hidden;
-  cursor: none;
+  cursor: pointer;
   scroll-snap-align: start;
 }
 .hslide.is-portrait {
@@ -926,7 +870,7 @@ nav.portfolio-nav {
   overflow: hidden;
   width: 100%;
   aspect-ratio: 21/9;
-  cursor: none;
+  cursor: pointer;
   margin-bottom: 1rem;
 }
 @media (max-width: 700px) {
@@ -1019,7 +963,7 @@ nav.portfolio-nav {
   position: relative;
   overflow: hidden;
   aspect-ratio: 4/3;
-  cursor: none;
+  cursor: pointer;
 }
 .vsm:hover .vsm-bg {
   transform: scale(1.06);
@@ -1273,7 +1217,7 @@ footer.portfolio-footer {
   background: none;
   border: none;
   color: var(--text);
-  cursor: none;
+  cursor: pointer;
   font-size: 1.6rem;
   opacity: 0.5;
   transition: opacity 0.3s;
@@ -1355,7 +1299,7 @@ footer.portfolio-footer {
   background: none;
   border: none;
   color: var(--text);
-  cursor: none;
+  cursor: pointer;
   font-size: 2.5rem;
   opacity: 0.3;
   transition: opacity 0.25s;
@@ -1396,7 +1340,7 @@ footer.portfolio-footer {
   border: 1px solid rgba(201, 168, 76, 0.25);
   background: none;
   color: var(--text);
-  cursor: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1451,20 +1395,6 @@ footer.portfolio-footer {
 /* ─────────────────────────────────────────────────────────────────── */
 /* GALLERY V2 PAGE                                                    */
 /* ─────────────────────────────────────────────────────────────────── */
-
-body.on-photo #cur-dot {
-  width: 0;
-  height: 0;
-}
-body.on-photo #cur-ring {
-  width: 76px;
-  height: 76px;
-  border-color: var(--gold);
-  background: var(--gold);
-}
-body.on-photo #cur-label {
-  opacity: 1;
-}
 
 nav.gallery-nav {
   position: fixed;
@@ -1574,7 +1504,7 @@ nav.gallery-nav {
   background: none;
   border: 1px solid rgba(240, 235, 226, 0.1);
   color: var(--dim);
-  cursor: none;
+  cursor: pointer;
   transition: all 0.25s;
 }
 .filter-btn:hover,
@@ -1602,7 +1532,7 @@ nav.gallery-nav {
   background: none;
   border: 1px solid rgba(240, 235, 226, 0.1);
   color: var(--dim);
-  cursor: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1658,7 +1588,7 @@ nav.gallery-nav {
   margin-bottom: 1.1rem;
   position: relative;
   overflow: hidden;
-  cursor: none;
+  cursor: pointer;
   display: block;
   opacity: 0;
   transform: translateY(20px);
@@ -1871,7 +1801,7 @@ nav.gallery-nav {
   background: none;
   border: none;
   color: var(--text);
-  cursor: none;
+  cursor: pointer;
   opacity: 0.4;
   transition: opacity 0.25s;
   z-index: 10;
@@ -1898,7 +1828,7 @@ nav.gallery-nav {
   background: none;
   border: none;
   color: var(--text);
-  cursor: none;
+  cursor: pointer;
   opacity: 0.25;
   transition: opacity 0.25s;
   padding: 1.2rem;
@@ -1962,7 +1892,7 @@ nav.gallery-nav {
   width: 52px;
   height: 38px;
   flex-shrink: 0;
-  cursor: none;
+  cursor: pointer;
   overflow: hidden;
   border: 1.5px solid transparent;
   transition:

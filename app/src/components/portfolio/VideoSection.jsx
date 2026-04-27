@@ -1,27 +1,34 @@
-import { VIDEOS } from '../../data/photos.js';
+import { useVideos } from '../../hooks/useVideos';
 
 export default function VideoSection({ onVideo }) {
-  const featured = VIDEOS[0];
-  const rest = VIDEOS.slice(1);
+  const { videos } = useVideos();
+
+  if (videos.length === 0) return null;
+
+  const featured = videos[0];
+  const rest = videos.slice(1);
+
   return (
     <section id="video" className="video-section">
-      <span className="bento-label fi">03 — Videography</span>
+      <span className="bento-label fi">02 — Videography</span>
       <h2 className="bento-title fi">In Motion</h2>
 
       <div
         className="video-hero-card fi"
         onClick={() => onVideo(featured)}
-        onMouseEnter={() => document.body.classList.add('hovering-photo')}
-        onMouseLeave={() => document.body.classList.remove('hovering-photo')}
       >
-        <div
-          className="vhc-bg"
-          style={{
-            background: featured.g,
-            position: 'absolute',
-            inset: 0,
-          }}
-        />
+        {featured.thumbnail_url ? (
+          <img
+            src={featured.thumbnail_url}
+            alt={featured.title}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <div
+            className="vhc-bg"
+            style={{ background: featured.g, position: 'absolute', inset: 0 }}
+          />
+        )}
         <div className="vhc-overlay" />
         <div className="vhc-info">
           <div className="vhc-label">
@@ -43,15 +50,19 @@ export default function VideoSection({ onVideo }) {
             key={v.id}
             className="vsm"
             onClick={() => onVideo(v)}
-            onMouseEnter={() => document.body.classList.add('hovering-photo')}
-            onMouseLeave={() =>
-              document.body.classList.remove('hovering-photo')
-            }
           >
-            <div
-              className="vsm-bg"
-              style={{ background: v.g, position: 'absolute', inset: 0 }}
-            />
+            {v.thumbnail_url ? (
+              <img
+                src={v.thumbnail_url}
+                alt={v.title}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <div
+                className="vsm-bg"
+                style={{ background: v.g, position: 'absolute', inset: 0 }}
+              />
+            )}
             <div className="vsm-ov">
               <div className="vsm-play">
                 <svg viewBox="0 0 24 24">

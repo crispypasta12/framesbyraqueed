@@ -81,8 +81,6 @@ export default function HGallery({ photos, onPhoto }) {
                         key={p.id}
                         className={`hslide ${aspect.className}`}
                         onClick={() => onPhoto(p, srcIdx)}
-                        onMouseEnter={() => document.body.classList.add('hovering-photo')}
-                        onMouseLeave={() => document.body.classList.remove('hovering-photo')}
                         style={{ '--photo-ar': aspect.value }}
                       >
                         <div className="hslide-bg" style={{ background: p.url ? '#080808' : p.g }}>

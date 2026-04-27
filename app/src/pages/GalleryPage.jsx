@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCursor } from '../hooks/useCursor.js';
 import { usePhotos } from '../hooks/usePhotos.js';
 import { IMAGE_PRESETS, cloudinaryImage } from '../lib/cloudinary.js';
 
@@ -91,8 +90,6 @@ function PhotoItem({ photo, idx, view, onClick }) {
         className="gallery-item"
         style={{ transitionDelay: `${Math.min(idx, 8) * 40}ms` }}
         onClick={onClick}
-        onMouseEnter={() => document.body.classList.add('on-photo')}
-        onMouseLeave={() => document.body.classList.remove('on-photo')}
       >
         <div className="gi-scale">
           <div
@@ -131,8 +128,6 @@ function PhotoItem({ photo, idx, view, onClick }) {
       className="gallery-item"
       style={{ transitionDelay: `${Math.min(idx, 12) * 35}ms` }}
       onClick={onClick}
-      onMouseEnter={() => document.body.classList.add('on-photo')}
-      onMouseLeave={() => document.body.classList.remove('on-photo')}
     >
       <div className="gi-scale">
         <div
@@ -286,7 +281,6 @@ export default function GalleryPage() {
   const pendingFilter = useRef(null);
   const { photos: ALL_PHOTOS } = usePhotos();
 
-  useCursor('OPEN');
   useParallax();
 
   const FILTERS = useMemo(() => {

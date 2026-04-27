@@ -86,6 +86,18 @@ const s = {
 
 const blank = { title: '', loc: '', cam: '', ar: '4/3', tags: [], in_still_frames: false, focal_length: '', aperture: '', shutter_speed: '', iso: '' };
 
+const VIDEO_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+function extractYtId(input) {
+  const s = input.trim();
+  const m = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+  return null;
+}
+
+const blankVideo = { ytUrl: '', title: '', dur: '', loc: '' };
+
 export default function AdminPage() {
   const [form, setForm] = useState(blank);
   const [file, setFile] = useState(null);
@@ -103,6 +115,23 @@ export default function AdminPage() {
   const fileRef = useRef();
   const previewUrlRef = useRef(null);
   const filePickIdRef = useRef(0);
+
+  // video state
+  const [videoForm, setVideoForm] = useState(blankVideo);
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoPreview, setVideoPreview] = useState(null);
+  const [videoOver, setVideoOver] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoMsg, setVideoMsg] = useState(null);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [videos, setVideos] = useState([]);
+  const [videosLoading, setVideosLoading] = useState(true);
+  const [videosError, setVideosError] = useState('');
+  const [videoActionId, setVideoActionId] = useState(null);
+  const [editingVideoId, setEditingVideoId] = useState(null);
+  const [editVideoForm, setEditVideoForm] = useState(null);
+  const videoFileRef = useRef();
+  const videoPreviewUrlRef = useRef(null);
 
   useEffect(() => {
     document.body.style.cursor = 'auto';
@@ -345,6 +374,169 @@ export default function AdminPage() {
     }
   };
 
+  // ── video helpers ──────────────────────────────────────────────
+  const fetchVideos = async ({ showLoading = false } = {}) => {
+    if (showLoading) setVideosLoading(true);
+    setVideosError('');
+    try {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+      if (error) throw new Error(error.message);
+      setVideos(data || []);
+    } catch (err) {
+      setVideosError(err.message);
+    } finally {
+      if (showLoading) setVideosLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from('videos')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) setVideosError(error.message);
+        else setVideos(data || []);
+        setVideosLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const clearVideoPreview = () => {
+    if (videoPreviewUrlRef.current) {
+      URL.revokeObjectURL(videoPreviewUrlRef.current);
+      videoPreviewUrlRef.current = null;
+    }
+    setVideoPreview(null);
+  };
+
+  const pickVideoFile = (f) => {
+    if (!f) return;
+    clearVideoPreview();
+    const url = URL.createObjectURL(f);
+    videoPreviewUrlRef.current = url;
+    setVideoFile(f);
+    setVideoPreview(url);
+  };
+
+  const uploadVideo = async (e) => {
+    e.preventDefault();
+    const ytId = extractYtId(videoForm.ytUrl);
+    if (!ytId) { setVideoMsg({ ok: false, text: 'Invalid YouTube URL or ID.' }); return; }
+    if (!videoForm.title.trim()) { setVideoMsg({ ok: false, text: 'Title is required.' }); return; }
+
+    setVideoUploading(true);
+    setVideoMsg(null);
+    setVideoProgress(10);
+
+    try {
+      let thumbnail_url = null;
+      let thumbnail_public_id = null;
+
+      if (videoFile) {
+        const fd = new FormData();
+        fd.append('file', videoFile);
+        fd.append('upload_preset', UPLOAD_PRESET);
+        fd.append('folder', 'portfolio/video-thumbnails');
+        setVideoProgress(30);
+        const res = await fetch(VIDEO_UPLOAD_URL, { method: 'POST', body: fd });
+        const cloud = await res.json();
+        if (cloud.error) throw new Error(cloud.error.message);
+        thumbnail_url = cloud.secure_url;
+        thumbnail_public_id = cloud.public_id;
+      }
+
+      setVideoProgress(70);
+      const { error } = await supabase.from('videos').insert({
+        yt_id: ytId,
+        title: videoForm.title.trim(),
+        dur: videoForm.dur.trim() || null,
+        loc: videoForm.loc.trim() || null,
+        thumbnail_url,
+        thumbnail_public_id,
+        sort_order: videos.length,
+      });
+      if (error) throw new Error(error.message);
+
+      setVideoProgress(100);
+      setVideoMsg({ ok: true, text: `"${videoForm.title}" added.` });
+      setVideoForm(blankVideo);
+      setVideoFile(null);
+      clearVideoPreview();
+      await fetchVideos();
+    } catch (err) {
+      setVideoMsg({ ok: false, text: err.message });
+    } finally {
+      setVideoUploading(false);
+      setTimeout(() => setVideoProgress(0), 800);
+    }
+  };
+
+  const deleteVideo = async (video) => {
+    if (!confirm(`Delete "${video.title}"?`)) return;
+    setVideoActionId(video.id);
+    setVideosError('');
+    try {
+      const { error } = await supabase.from('videos').delete().eq('id', video.id);
+      if (error) throw new Error(error.message);
+      await fetchVideos();
+    } catch (err) {
+      setVideosError(err.message);
+    } finally {
+      setVideoActionId(null);
+    }
+  };
+
+  const startEditVideo = (video) => {
+    setVideosError('');
+    setEditingVideoId(video.id);
+    setEditVideoForm({
+      ytUrl: video.yt_id,
+      title: video.title || '',
+      dur: video.dur || '',
+      loc: video.loc || '',
+    });
+  };
+
+  const cancelEditVideo = () => {
+    setEditingVideoId(null);
+    setEditVideoForm(null);
+  };
+
+  const saveEditVideo = async (video) => {
+    const ytId = extractYtId(editVideoForm.ytUrl);
+    if (!ytId) { setVideosError('Invalid YouTube URL or ID.'); return; }
+    if (!editVideoForm.title.trim()) { setVideosError('Title is required.'); return; }
+    setVideoActionId(video.id);
+    setVideosError('');
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({
+          yt_id: ytId,
+          title: editVideoForm.title.trim(),
+          dur: editVideoForm.dur.trim() || null,
+          loc: editVideoForm.loc.trim() || null,
+        })
+        .eq('id', video.id);
+      if (error) throw new Error(error.message);
+      cancelEditVideo();
+      await fetchVideos();
+    } catch (err) {
+      setVideosError(err.message);
+    } finally {
+      setVideoActionId(null);
+    }
+  };
+  // ───────────────────────────────────────────────────────────────
+
   return (
     <div style={s.page}>
       <div style={s.header}>
@@ -527,6 +719,158 @@ export default function AdminPage() {
                       {photoActionId === p.id ? 'Working...' : 'Delete'}
                     </button>
                   </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Video Management ── */}
+      <div style={s.section}>
+        <p style={s.sectionTitle}>Add Video</p>
+        <form onSubmit={uploadVideo} style={s.form}>
+          <div style={s.fullRow}>
+            <label style={s.label}>YouTube URL or ID *</label>
+            <input
+              style={s.input}
+              value={videoForm.ytUrl}
+              onChange={(e) => setVideoForm((p) => ({ ...p, ytUrl: e.target.value }))}
+              placeholder="https://youtube.com/watch?v=... or video ID"
+            />
+          </div>
+
+          <div>
+            <label style={s.label}>Title *</label>
+            <input
+              style={s.input}
+              value={videoForm.title}
+              onChange={(e) => setVideoForm((p) => ({ ...p, title: e.target.value }))}
+              placeholder="City After Dark"
+            />
+          </div>
+
+          <div>
+            <label style={s.label}>Location</label>
+            <input
+              style={s.input}
+              value={videoForm.loc}
+              onChange={(e) => setVideoForm((p) => ({ ...p, loc: e.target.value }))}
+              placeholder="Dhaka"
+            />
+          </div>
+
+          <div style={s.fullRow}>
+            <label style={s.label}>Duration</label>
+            <input
+              style={{ ...s.input, maxWidth: '200px' }}
+              value={videoForm.dur}
+              onChange={(e) => setVideoForm((p) => ({ ...p, dur: e.target.value }))}
+              placeholder="4:32"
+            />
+          </div>
+
+          <div style={s.fullRow}>
+            <label style={s.label}>Thumbnail Image (optional)</label>
+            <div
+              style={s.dropzone(videoOver)}
+              onClick={() => videoFileRef.current.click()}
+              onDragOver={(e) => { e.preventDefault(); setVideoOver(true); }}
+              onDragLeave={() => setVideoOver(false)}
+              onDrop={(e) => { e.preventDefault(); setVideoOver(false); pickVideoFile(e.dataTransfer.files[0]); }}
+            >
+              {videoFile ? videoFile.name : 'Drop thumbnail here or click to select'}
+            </div>
+            <input
+              ref={videoFileRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => pickVideoFile(e.target.files[0])}
+            />
+            {videoPreview && <img src={videoPreview} alt="thumbnail preview" style={s.preview} />}
+          </div>
+
+          <div style={s.fullRow}>
+            <button style={s.submitBtn} type="submit" disabled={videoUploading}>
+              {videoUploading ? 'Adding…' : 'Add Video'}
+            </button>
+            {videoMsg && <p style={s.msg(videoMsg.ok)}>{videoMsg.text}</p>}
+            {videoUploading && (
+              <div style={s.progress}>
+                <div style={s.progressFill(videoProgress)} />
+              </div>
+            )}
+          </div>
+        </form>
+      </div>
+
+      <div style={s.section}>
+        <p style={s.sectionTitle}>{videosLoading ? 'Loading Videos' : `${videos.length} Videos`}</p>
+        {!videosLoading && videosError && <p style={{ ...s.msg(false), marginTop: 0 }}>{videosError}</p>}
+        {videosLoading ? (
+          <p style={s.listState}>Loading videos...</p>
+        ) : videos.length === 0 ? (
+          <p style={{ color: '#444', fontSize: '0.85rem' }}>No videos yet. Add your first one above.</p>
+        ) : (
+          <div style={s.grid}>
+            {videos.map((v) => (
+              <div key={v.id} style={s.card}>
+                {v.thumbnail_url ? (
+                  <img src={v.thumbnail_url} alt={v.title} style={s.cardImg} loading="lazy" decoding="async" />
+                ) : (
+                  <div style={{ ...s.cardImg, background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '0.08em' }}>YT: {v.yt_id}</span>
+                  </div>
+                )}
+                <div style={s.cardBody}>
+                  {editingVideoId === v.id && editVideoForm ? (
+                    <div style={s.editFields}>
+                      <input
+                        style={s.editInput}
+                        value={editVideoForm.ytUrl}
+                        onChange={(e) => setEditVideoForm((p) => ({ ...p, ytUrl: e.target.value }))}
+                        placeholder="YouTube URL or ID"
+                      />
+                      <input
+                        style={s.editInput}
+                        value={editVideoForm.title}
+                        onChange={(e) => setEditVideoForm((p) => ({ ...p, title: e.target.value }))}
+                        placeholder="Title"
+                      />
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem' }}>
+                        <input
+                          style={s.editInput}
+                          value={editVideoForm.loc}
+                          onChange={(e) => setEditVideoForm((p) => ({ ...p, loc: e.target.value }))}
+                          placeholder="Location"
+                        />
+                        <input
+                          style={s.editInput}
+                          value={editVideoForm.dur}
+                          onChange={(e) => setEditVideoForm((p) => ({ ...p, dur: e.target.value }))}
+                          placeholder="Duration (4:32)"
+                        />
+                      </div>
+                      <div style={s.cardActions}>
+                        <button style={s.saveBtn} type="button" onClick={() => saveEditVideo(v)} disabled={videoActionId === v.id}>
+                          {videoActionId === v.id ? 'Saving...' : 'Save'}
+                        </button>
+                        <button style={s.deleteBtn} type="button" onClick={cancelEditVideo} disabled={videoActionId === v.id}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={s.cardTitle}>{v.title}</div>
+                      <div style={s.cardMeta}>{[v.dur, v.loc].filter(Boolean).join(' · ')}</div>
+                      <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.4rem' }}>
+                        <button style={s.deleteBtn} type="button" onClick={() => startEditVideo(v)} disabled={videoActionId === v.id}>Edit</button>
+                        <button style={s.deleteBtn} type="button" onClick={() => deleteVideo(v)} disabled={videoActionId === v.id}>
+                          {videoActionId === v.id ? 'Working...' : 'Delete'}
+                        </button>
+                      </div>
                     </>
                   )}
                 </div>

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useCursor } from '../hooks/useCursor.js';
 import { useReveal } from '../hooks/useReveal.js';
 import { usePhotos } from '../hooks/usePhotos.js';
 import Nav from '../components/portfolio/Nav.jsx';
@@ -18,7 +17,6 @@ export default function PortfolioPage() {
   const [videoModal, setVideoModal] = useState(null);
   const { photos } = usePhotos();
 
-  useCursor('VIEW');
   useReveal('.fi', 'v', []);
 
   useEffect(() => {
